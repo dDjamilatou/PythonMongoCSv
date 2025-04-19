@@ -8,22 +8,22 @@ class Database:
         self.invalides = self.db["etudiants_invalides"]
 
     def ajouter_etudiant(self, etudiant, valide=True):
-        """Ajoute un étudiant dans la bonne collection"""
         collection = self.valides if valide else self.invalides
         collection.insert_one(etudiant)
-    
-    def vider_collections(self):
-        """Vide les collections pour éviter les doublons"""
-        self.valides.delete_many({})
-        self.invalides.delete_many({})
 
-    def recuperer_etudiants(self, valide=True):
-        """Récupère tous les étudiants d'une collection"""
+    def modifier_etudiant(self, numero, nouvelles_donnees, valide=True):
         collection = self.valides if valide else self.invalides
-        return list(collection.find({}, {"_id": 0}))  # Ne pas afficher l'ID MongoDB
+        collection.update_one({"Numéro": numero}, {"$set": nouvelles_donnees})
+
+    def supprimer_etudiant(self, numero):
+        result = self.valides.delete_one({"Numéro": numero})
+        if result.deleted_count == 0:
+            self.invalides.delete_one({"Numéro": numero})
 
     def rechercher_etudiant(self, numero):
-        """Recherche un étudiant par son numéro"""
         etudiant = self.valides.find_one({"Numéro": numero}, {"_id": 0})
         return etudiant if etudiant else self.invalides.find_one({"Numéro": numero}, {"_id": 0})
 
+    def recuperer_etudiants(self, valide=True):
+        collection = self.valides if valide else self.invalides
+        return list(collection.find({}, {"_id": 0}))
